@@ -34,8 +34,8 @@
     [a b]))
 
 (def common-letters (->> correct-boxes
-                         (map (fn [pair] (map #(if (= %1 %2) %1 nil) (first pair) (second pair))))
-                         (map #(apply str %))
+                         (map (fn [[a b]] (map #(if (= %1 %2) %1 nil) a b)))
+                         (map (partial apply str))
                          (distinct)
                          (first)))
 
