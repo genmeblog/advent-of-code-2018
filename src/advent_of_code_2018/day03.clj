@@ -9,9 +9,9 @@
     [id x y (+ x w) (+ y h)]))
 
 (def claims
-  (map claim-parser (-> (io/resource "day03.txt")
-                        (io/reader)
-                        (line-seq))))
+  (delay (map claim-parser (-> (io/resource "day03.txt")
+                               (io/reader)
+                               (line-seq)))))
 
 (defn overlap
   "Find overlaps"
@@ -25,10 +25,10 @@
         [left top right bottom]))))
 
 (def overlaps-map
-  (reduce #(->> (map (partial overlap %2) claims)
-                (filter some?)
-                (seq)
-                (assoc %1 (first %2))) {} claims))
+  (delay (reduce #(->> (map (partial overlap %2) @claims)
+                       (filter some?)
+                       (seq)
+                       (assoc %1 (first %2))) {} @claims)))
 
 (defn overlap->set
   "Convert common rectangle to set of coordinates"
@@ -38,13 +38,13 @@
          [x y])))
 
 (def inches-overlap
-  (count (->> (vals overlaps-map)
-              (mapcat identity)
-              (map overlap->set)
-              (reduce union #{}))))
+  (delay (count (->> (vals @overlaps-map)
+                     (mapcat identity)
+                     (map overlap->set)
+                     (reduce union #{})))))
 
 ;; solution
 
-{:overlapping inches-overlap
- :not-overlapping-id (ffirst (filter (comp nil? second) overlaps-map))}
+(time {:overlapping @inches-overlap
+       :not-overlapping-id (ffirst (filter (comp nil? second) @overlaps-map))})
 ;; => {:overlapping 118539, :not-overlapping-id 1270}
