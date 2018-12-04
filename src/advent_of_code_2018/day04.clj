@@ -8,15 +8,15 @@
   (let [[ydm h m op] (rest (re-find #"\[(\d+-\d+-\d+)\s(\d+):(\d+)\].*(#\d+|wakes|falls)" line))]
     {:date (i/read-instant-date (str ydm "T" h ":" m))
      :minute (Integer/parseInt m)
-     :event-code (when (= \# (first op))
-                   (read-string (subs op 1)))}))
+     :guard-id (when (= \# (first op))
+                 (read-string (subs op 1)))}))
 
 (defn pack-events
   "Reorganize input"
-  [[id acc] {:keys [event-code minute]}]
-  (if (nil? event-code)
+  [[id acc] {:keys [guard-id minute]}]
+  (if (nil? guard-id)
     [id (update acc id conj minute)]
-    [event-code acc]))
+    [guard-id acc]))
 
 ;; read whole log into a map
 (def log
