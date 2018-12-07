@@ -6,4 +6,6 @@
   :url "https://github.com/genmeblog/advent-of-code-2018"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.10.0-RC3"]])
+  :dependencies [[org.clojure/clojure "1.10.0-RC4"]
+                 [clojure2d "1.0.3"]
+                 [generateme/fastmath "1.1.4"]])
