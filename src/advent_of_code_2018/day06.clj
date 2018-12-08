@@ -6,6 +6,7 @@
             [clojure2d.color :as c]))
 
 (set! *unchecked-math* :warn-on-boxed)
+(set! *warn-on-reflection* true)
 
 (def coords (delay (map #(map read-string (s/split % #",\s"))
                         (->> "day06.txt"
@@ -18,34 +19,33 @@
 
 (def bounding-box
   (delay (let [[fx fy] (first @coords)
-               [^int x1 ^int y1 ^int x2 ^int y2] (reduce min-max [fx fy fx fy] (rest @coords))]
+               [^long x1 ^long y1 ^long x2 ^long y2] (reduce min-max [fx fy fx fy] (rest @coords))]
            {:box [[x1 (inc x2)]
                   [y1 (inc y2)]]
-            :check-box (fn [[^int x ^int y]]
+            :check-box (fn [[^long x ^long y]]
                          (or (== x1 x) (== x2 x) (== y1 y) (== y2 y)))})))
 
 (def dist-seq
-  (delay (for [^int x (apply range (first (:box @bounding-box)))
-               ^int y (apply range (second (:box @bounding-box)))
+  (delay (for [^long x (apply range (first (:box @bounding-box)))
+               ^long y (apply range (second (:box @bounding-box)))
                :let [dists (map-indexed (fn [idx [^long cx ^long cy]]
                                           [(+ (Math/abs (- x cx))
                                               (Math/abs (- y cy))) idx]) @coords)]]
            [[x y] dists])))
 
 (defn find-minimal-dist [lst]
-  (reduce (fn [[^int min-dist curr-coord ^int cnt :as curr] [^int dist coord]]
-            (cond
-              (< dist min-dist) [dist coord 0]
-              (== dist min-dist) [dist coord (inc cnt)]
-              :else curr)) (conj (first lst) 0) (rest lst)))
-
-(defn process-point [lst]
-  (let [[_ coord ^int cnt] (find-minimal-dist lst)]
+  (let [[_ coord ^long cnt] (reduce (fn [[^long min-dist curr-coord ^long cnt :as curr] [^long dist coord]]
+                                      (cond
+                                        (< dist min-dist) [dist coord 0]
+                                        (== dist min-dist) [dist coord (inc cnt)]
+                                        :else curr)) [Integer/MAX_VALUE nil 0] lst)]
     (when (zero? cnt) coord)))
 
+
+
 (def voronoi
-  (delay (remove nil? (map (fn [[[x y] lst]]
-                             (when-let [id (process-point lst)] [id x y])) @dist-seq))))
+  (delay (keep identity (map (fn [[[x y] lst]]
+                               (when-let [id (find-minimal-dist lst)] [id x y])) @dist-seq))))
 
 (defn maximum []
   (let [on-boundary? (:check-box @bounding-box)]
@@ -56,8 +56,8 @@
 
 (defn region []
   (->> @dist-seq
-       (map #(reduce + (map first (second %))))
-       (filter #(< ^int % 10000))
+       (filter #(< ^long (reduce (fn [^long acc curr]
+                                   (+ acc ^long (curr 0))) 0 (second %)) 10000))
        (count)))
 
 (time {:largest-area (maximum)
