@@ -3,10 +3,11 @@
             [clojure.string :as s]))
 
 (set! *unchecked-math* :warn-on-boxed)
+(set! *warn-on-reflection* true)
 
 (def polymer (->> (slurp (io/resource "day05.txt"))
                   (s/trim)
-                  (map int)
+                  (mapv int)
                   (delay)))
 
 (defn react

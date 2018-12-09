@@ -8,11 +8,12 @@
 (set! *unchecked-math* :warn-on-boxed)
 (set! *warn-on-reflection* true)
 
-(def coords (delay (map #(map read-string (s/split % #",\s"))
-                        (->> "day06.txt"
-                             (io/resource)
-                             (io/reader)
-                             (line-seq)))))
+(def coords (delay (mapv #(let [[x y] (s/split % #",\s")]
+                            [(read-string x) (read-string y)])
+                         (->> "day06.txt"
+                              (io/resource)
+                              (io/reader)
+                              (line-seq)))))
 
 (defn min-max [[^int minx ^int miny ^int maxx ^int maxy] [^int x ^int y]]
   [(min minx x) (min miny y) (max maxx x) (max maxy y)])
@@ -28,36 +29,36 @@
 (def dist-seq
   (delay (for [^long x (apply range (first (:box @bounding-box)))
                ^long y (apply range (second (:box @bounding-box)))
-               :let [dists (map-indexed (fn [idx [^long cx ^long cy]]
-                                          [(+ (Math/abs (- x cx))
-                                              (Math/abs (- y cy))) idx]) @coords)]]
-           [[x y] dists])))
+               :let [dists (mapv (fn [[^long cx ^long cy]]
+                                   (+ (Math/abs (- x cx))
+                                      (Math/abs (- y cy)))) @coords)]]
+           [[x y (reduce + dists)] dists])))
 
 (defn find-minimal-dist [lst]
-  (let [[_ coord ^long cnt] (reduce (fn [[^long min-dist curr-coord ^long cnt :as curr] [^long dist coord]]
-                                      (cond
-                                        (< dist min-dist) [dist coord 0]
-                                        (== dist min-dist) [dist coord (inc cnt)]
-                                        :else curr)) [Integer/MAX_VALUE nil 0] lst)]
+  (let [[_ coord ^long cnt] (reduce (fn [[^long min-dist ^long curr-coord ^long cnt ^long coord] ^long dist]
+                                      (let [ncoord (inc coord)]
+                                        (cond
+                                          (< dist min-dist) [dist coord 0 ncoord]
+                                          (== dist min-dist) [dist coord (inc cnt) ncoord]
+                                          :else [min-dist curr-coord cnt ncoord])))
+                                    [Integer/MAX_VALUE -1 0 0] lst)]
     (when (zero? cnt) coord)))
 
-
-
-(def voronoi
-  (delay (keep identity (map (fn [[[x y] lst]]
-                               (when-let [id (find-minimal-dist lst)] [id x y])) @dist-seq))))
+(def voronoi (delay (keep identity
+                          (mapv (fn [[xy lst]]
+                                  (when-let [id (find-minimal-dist lst)] [id xy]))
+                                @dist-seq))))
 
 (defn maximum []
   (let [on-boundary? (:check-box @bounding-box)]
     (reduce (fn [^long curr [_ lst]]
-              (if (some on-boundary? lst)
+              (if (some (comp on-boundary? second) lst)
                 curr
                 (max curr (count lst)))) 0 (group-by first @voronoi))))
 
 (defn region []
-  (->> @dist-seq
-       (filter #(< ^long (reduce (fn [^long acc curr]
-                                   (+ acc ^long (curr 0))) 0 (second %)) 10000))
+  (->> (map first @dist-seq)
+       (filter #(< ^long (% 2) 10000))
        (count)))
 
 (time {:largest-area (maximum)
@@ -70,10 +71,11 @@
       c (canvas 400 400)]
   (with-canvas [c c]
     (set-background c :black)
-    (doseq [[id x y] @voronoi]
+    (doseq [[id [x y]] @voronoi]
       (set-color c (colors id))
       (point c x y))
     (set-color c :red 200)
     (doseq [[x y] @coords]
       (ellipse c x y 3 3)))
-  (show-window {:canvas c}))
+  (show-window {:canvas c})
+  (save c "images/day6.jpg"))

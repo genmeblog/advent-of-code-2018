@@ -1,6 +1,9 @@
 (ns advent-of-code-2018.day02
   (:require [clojure.java.io :as io]))
 
+(set! *unchecked-math* :warn-on-boxed)
+(set! *warn-on-reflection* true)
+
 (def ids
   (-> (io/resource "day02.txt")
       (io/reader)
@@ -18,15 +21,15 @@
 
 (defn how-many
   "How many sets with given value"
-  [val]
+  ^long [val]
   (count (filter #(% val) @freqs)))
 
 ;; part 2
 
 (defn str-diff
   "Difference between two strings. Returns 0 when strings differ by exactly one character."
-  [a b]
-  (dec (reduce + (map (fn [a b] (if (= a b) 0 1)) a b))))
+  ^long [a b]
+  (dec ^long (reduce + (map (fn [a b] (if (= a b) 0 1)) a b))))
 
 (def correct-boxes
   (delay (for [a @ids
@@ -40,9 +43,6 @@
                          (distinct)
                          (first)
                          (delay)))
-
-;; answers
-
 
 (time {:checksum (* (how-many 2) (how-many 3))
        :common-letters @common-letters})

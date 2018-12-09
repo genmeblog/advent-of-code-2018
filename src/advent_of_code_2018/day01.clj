@@ -1,6 +1,9 @@
 (ns advent-of-code-2018.day01
   (:require [clojure.java.io :as io]))
 
+(set! *unchecked-math* :warn-on-boxed)
+(set! *warn-on-reflection* true)
+
 (def frequencies-diff
   (delay (map read-string (-> (io/resource "day01.txt")
                               (io/reader)

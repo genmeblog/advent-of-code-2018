@@ -2,6 +2,9 @@
   (:require [clojure.java.io :as io]
             [clojure.instant :as i]))
 
+(set! *unchecked-math* :warn-on-boxed)
+(set! *warn-on-reflection* true)
+
 (defn log-parser
   "Parse input"
   [line]
@@ -43,7 +46,7 @@
 (defn id-with-selector
   "Sort and calculate id using selected value from stats"
   [selector]
-  (let [[id _ m] (first (sort-by selector > @time-stats))]
+  (let [[^long id _ ^long m] (first (sort-by selector > @time-stats))]
     (* id m)))
 
 (time {:strategy-1 (id-with-selector last)
