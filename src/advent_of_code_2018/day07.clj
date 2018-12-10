@@ -18,10 +18,13 @@
 (defn edges->map [f1 f2] (into {} (map (fn [[k v]]
                                          [k (set (map f2 v))]) (group-by f1 @coords))))
 
-
+(def all (set (flatten @coords)))
+(def starts (edges->map first second))
+(def ends (edges->map second first))
+(def starting (apply sorted-set (difference all (set (keys ends)))))
 
 (defn remove-ends
-  [start starts ends]
+  [start ends]
   (reduce #(update %1 %2 disj start) ends (starts start)))
 
 (defn empty-ends
@@ -31,21 +34,39 @@
        (map first)))
 
 (defn process-ends
-  [curr-string candidates starts ends]
+  [curr-string candidates ends]
   (let [next-char (first candidates)
-        new-ends-pre (remove-ends next-char starts ends)
+        new-ends-pre (remove-ends next-char ends)
         new-candidates (empty-ends new-ends-pre)
         curr-candidates (apply conj (disj candidates next-char) new-candidates)]
     (if (seq curr-candidates)
-      (recur (str curr-string next-char) curr-candidates starts (apply dissoc new-ends-pre new-candidates))
+      (recur (str curr-string next-char) curr-candidates (apply dissoc new-ends-pre new-candidates))
       (str curr-string next-char))))
 
-(defn find-order []
-  (let [all (set (flatten @coords))
-        starts (edges->map first second)
-        ends (edges->map second first)
-        starting (apply sorted-set (difference all (set (keys ends))))]
-    (process-ends "" starting starts ends)))
+(defn fill-workers
+  [candidates workers]
+  (if (and (seq candidates) (< (count workers) 5))
+    (recur (rest candidates) (conj workers [(first candidates) (- (int (first candidates)) 4)]))
+    [candidates workers]))
 
-(time {:order (find-order)})
+(apply min-key second (second (fill-workers starting [])))
+
+(defn calc-time
+  [^long time workers]
+  (let [[_ ^long v] (apply min-key second workers)]
+    [(+ time v) (reduce (fn [lst [ch ^long cval]]
+                          (conj lst [ch (- cval v)])) [] workers)]))
+
+(defn process-ends-parallel
+  [curr-string candidates ends workers time]
+  (let [[ncandidates nworkers] (fill-workers candidates workers) ;; should be sorted map!!! (keys act as candidates)
+        [ntime nworkers] (calc-time time nworkers)
+        ;; remove ends (possibly multiple)
+        ;; add new candidates
+        ;; ...
+        nworkers (remove (comp zero? second) nworkers)
+        ]
+    ))
+
+(time {:order (process-ends "" starting ends)})
 ;; => {:order "OVXCKZBDEHINPFSTJLUYRWGAMQ"}
