@@ -1,6 +1,7 @@
 (ns advent-of-code-2018.day10
   (:require [clojure.java.io :as io]
-            [clojure2d.core :refer :all]))
+            [clojure2d.core :refer :all]
+            [fastmath.core :as m]))
 
 (set! *unchecked-math* :warn-on-boxed)
 (set! *warn-on-reflection* true)
