@@ -15,7 +15,7 @@
                               (io/reader)
                               (line-seq)))))
 
-(defn min-max [[^int minx ^int miny ^int maxx ^int maxy] [^int x ^int y]]
+(defn min-max [[^long minx ^long miny ^long maxx ^long maxy] [^long x ^long y]]
   [(min minx x) (min miny y) (max maxx x) (max maxy y)])
 
 (def bounding-box
