@@ -10,15 +10,10 @@
                   (mapv int)
                   (delay)))
 
-(defn react
-  "Approach built after discussion on slack."
-  ([poly] (react nil poly))
-  ([back poly]
-   (if-let [^int c (first poly)]
-     (if (and (seq back) (== 32 (Math/abs (- ^int (first back) c))))
-       (recur (rest back) (rest poly))
-       (recur (cons c back) (rest poly)))
-     back)))
+(defn react [poly]
+  (reduce #(if (and (seq %1) (== 32 (Math/abs (- ^int (first %1) ^int %2))))
+             (rest %1)
+             (cons %2 %1)) nil poly))
 
 (def removed-unit-reactions
   (delay (pmap (fn [^long upper ^long lower]
